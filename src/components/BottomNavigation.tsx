@@ -13,7 +13,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   onNavigate,
 }) => {
   const getIconColor = (route: 'search' | 'camera' | 'profile') => {
-    return currentRoute === route ? '#FFFFFF' : 'rgba(255, 255, 255, 0.5)';
+    return currentRoute === route ? '#ffffff' : 'rgba(255, 255, 255, 0.5)';
   };
 
   return (
@@ -81,9 +81,9 @@ const styles = StyleSheet.create({
   },
   container: {
     position: 'relative',
-    backgroundColor: 'black',
+    backgroundColor: 'black', // THIS IS THE BLACK YOU SEE!
     borderTopWidth: 0.5,
-    borderTopColor: 'rgba(72, 88, 70, 0.1)',
+    borderTopColor: 'rgba(29, 172, 10, 0.1)',
     paddingBottom: Platform.OS === 'ios' ? 20 : 10,
     zIndex: 1,
   },

@@ -9,9 +9,9 @@ export const CONSTANTS = {
 
 export const COLORS = {
   primary: '#007AFF',
-  background: '#000000',
-  white: '#FFFFFF',
-  cropBox: 'rgba(255, 255, 255, 0.8)',
-  overlay: 'rgba(0, 0, 0, 0.5)',
+  background: '#3e075e02',
+  white: '#ffffff',
+  cropBox: 'rgba(255, 255, 255, 0)',
+  overlay: 'rgba(175, 55, 55, 0)',
   handle: '#FFFFFF',
 };

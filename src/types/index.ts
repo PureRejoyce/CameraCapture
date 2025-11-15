@@ -25,4 +25,6 @@ export type RootStackParamList = {
   Preview: {
     croppedUri: string;
   };
+  Search: undefined;
+  Profile: undefined;
 };

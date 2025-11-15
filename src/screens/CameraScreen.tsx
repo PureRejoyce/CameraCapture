@@ -15,7 +15,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Camera'>;
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
-const FOOTER_HEIGHT = 280; // Total height of gradient + capture buttons + bottom nav
+const FOOTER_HEIGHT = 160; // Total height of gradient + capture buttons + bottom nav
 const BOTTOM_NAV_HEIGHT = 90; // Height of BottomNavigation component
 
 export default function CameraScreen() {
@@ -321,6 +321,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 5, // Higher priority than content overlays
   },
   capturedImage: {
     width: '100%',
@@ -334,43 +335,47 @@ const styles = StyleSheet.create({
     right: 0,
     width: '100%',
     height: FOOTER_HEIGHT,
-    zIndex: 999,
+    zIndex: 10, // Lower z-index than image container
+    backgroundColor: 'transparent',
   },
   gradientOverlay: {
     position: 'absolute',
-    top: 0,
+    top: 10,
     left: 0,
     right: 0,
-    bottom: BOTTOM_NAV_HEIGHT,
+    bottom: 0,
     backgroundColor: 'transparent',
   },
   gradientTop: {
     position: 'absolute',
     top: 0,
     left: 0,
-    right: 0,   //    THIS IS FOR TAKE A PICTURE AREA 
-    height: 150,
-    backgroundColor: 'rgba(0, 0, 0, 0)',
+    right: 0,
+    height: 0,
+    backgroundColor: 'rgba(6, 194, 31, 0)', // Fully transparent at top
+    zIndex: -1, // Keep gradients behind content
   },
   gradientMiddle: {
     position: 'absolute',
-    top: 150,
+    top: 0,
     left: 0,
     right: 0,
-    height: 100,
-    backgroundColor: 'rgba(10, 6, 6, 0.49)',
+    height: 30,
+    backgroundColor: 'rgba(167, 201, 17, 0)', // Semi-transparent fade
+    zIndex: -1, // Keep gradients behind content
   },
   gradientBottom: {
     position: 'absolute',
-    top: 100,
+    top: -40,
     left: 0,
     right: 0,
-    bottom: 0,
-    backgroundColor: '#000000',
+    bottom: -90,
+    backgroundColor: '#000000', // Solid black for buttons and nav
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     borderTopWidth: 1,
-    borderTopColor: '#ffffff',
+    borderTopColor: '#ffffffff', // WHITE BORDER LINE - now at 60px
+    zIndex: -1, // Ensure gradient stays behind other content
   },
   topBar: {
     position: 'absolute',
@@ -381,7 +386,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     flexDirection: 'row',
     justifyContent: 'center',
-    zIndex: 10,
+    zIndex: 15, // Higher than image container to stay visible
   },
   centerContent: {
     position: 'absolute',
@@ -389,7 +394,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
-    zIndex: 5,
+    zIndex: 100, // Highest priority for instructional text overlay
   },
   brandContainer: {
     flexDirection: 'row',
@@ -419,21 +424,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 40,
-    paddingTop: 120,
-    paddingBottom: 20,
-    zIndex: 10,
+    paddingTop: 0, // Space from top of footer to buttons (includes gradient area)
+    paddingBottom: -20,
+    zIndex: 8, // Set below footer wrapper to stay within bounds
+    backgroundColor: 'transparent',
   },
   iconButton: {
-    width: 62.5,  // Increased by 25% (50 * 1.25 = 62.5)
-    height: 62.5, // Increased by 25% (50 * 1.25 = 62.5)
+    width: 62.5,
+    height: 62.5,
     justifyContent: 'center',
     alignItems: 'center',
     marginHorizontal: 30,
   },
   iconButtonInner: {
-    width: 62.5,  // Increased by 25% (50 * 1.25 = 62.5)
-    height: 62.5, // Increased by 25% (50 * 1.25 = 62.5)
-    borderRadius: 31.25, // Adjusted for new size (62.5 / 2)
+    width: 62.5,
+    height: 62.5,
+    borderRadius: 31.25,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
