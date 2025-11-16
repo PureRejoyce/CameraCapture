@@ -13,6 +13,7 @@ interface CropBoxProps {
   onCropChange: (region: CropRegion) => void;
   imageDimensions: ImageDimensions;
   displayDimensions: ImageDimensions;
+  maxHeight?: number;
 }
 
 export const CropBox: React.FC<CropBoxProps> = ({
@@ -20,6 +21,7 @@ export const CropBox: React.FC<CropBoxProps> = ({
   onCropChange,
   imageDimensions,
   displayDimensions,
+  maxHeight,
 }) => {
   const scale = displayDimensions.width / imageDimensions.width;
   const lastTranslation = useRef({ x: 0, y: 0 });
@@ -48,7 +50,8 @@ export const CropBox: React.FC<CropBoxProps> = ({
       const constrained = constrainCropRegion(
         newRegion,
         imageDimensions,
-        CONSTANTS.MIN_CROP_SIZE
+        CONSTANTS.MIN_CROP_SIZE,
+        maxHeight
       );
 
       if (constrained.x !== cropRegion.x || constrained.y !== cropRegion.y) {
@@ -89,7 +92,8 @@ export const CropBox: React.FC<CropBoxProps> = ({
     const constrained = constrainCropRegion(
       newRegion,
       imageDimensions,
-      CONSTANTS.MIN_CROP_SIZE
+      CONSTANTS.MIN_CROP_SIZE,
+      maxHeight
     );
 
     logger.cropBoxResized(constrained);

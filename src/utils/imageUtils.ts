@@ -3,15 +3,18 @@ import { CropRegion, ImageDimensions } from '../types';
 export const constrainCropRegion = (
   region: CropRegion,
   imageDimensions: ImageDimensions,
-  minSize: number
+  minSize: number,
+  maxHeight?: number
 ): CropRegion => {
   const constrained = { ...region };
 
   constrained.width = Math.max(minSize, region.width);
   constrained.height = Math.max(minSize, region.height);
 
+  const effectiveHeight = maxHeight !== undefined ? Math.min(imageDimensions.height, maxHeight) : imageDimensions.height;
+
   constrained.x = Math.max(0, Math.min(region.x, imageDimensions.width - constrained.width));
-  constrained.y = Math.max(0, Math.min(region.y, imageDimensions.height - constrained.height));
+  constrained.y = Math.max(0, Math.min(region.y, effectiveHeight - constrained.height));
 
   return constrained;
 };

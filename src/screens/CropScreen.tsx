@@ -49,16 +49,11 @@ export default function CropScreen() {
   useEffect(() => {
     logger.navigationToScreen('CropScreen');
     
-    const aspectRatio = dimensions.width / dimensions.height;
-    let displayWidth = SCREEN_WIDTH;
-    let displayHeight = SCREEN_WIDTH / aspectRatio;
-
-    if (displayHeight > SCREEN_HEIGHT * 0.7) {
-      displayHeight = SCREEN_HEIGHT * 0.7;
-      displayWidth = displayHeight * aspectRatio;
-    }
-
-    setDisplayDimensions({ width: displayWidth, height: displayHeight });
+    // Set display dimensions to match the actual image container
+    setDisplayDimensions({ 
+      width: SCREEN_WIDTH, 
+      height: SCREEN_HEIGHT - FOOTER_HEIGHT 
+    });
 
     if (autoMode) {
       detectQuestion();
@@ -138,8 +133,8 @@ export default function CropScreen() {
       <View style={styles.imageContainer}>
         <Image 
           source={{ uri: photoUri }} 
-          style={[styles.image, displayDimensions]}
-          resizeMode="contain"
+          style={styles.image}
+          resizeMode="cover"
         />
         {displayDimensions.width > 0 && (
           <CropBox
@@ -147,6 +142,7 @@ export default function CropScreen() {
             onCropChange={setCropRegion}
             imageDimensions={dimensions}
             displayDimensions={displayDimensions}
+            maxHeight={dimensions.height}
           />
         )}
       </View>
@@ -286,13 +282,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   imageContainer: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: FOOTER_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 120,
-    paddingBottom: 300,
   },
   image: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT - FOOTER_HEIGHT,
     backgroundColor: '#1a1a1a',
   },
   footerWrapper: {

@@ -1,6 +1,6 @@
 // src/screens/CameraScreen.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { View, TouchableOpacity, StyleSheet, Text, Alert, Image, Dimensions } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Text, Alert, Image, Dimensions, Platform } from 'react-native';
 import { Camera, CameraType } from 'expo-camera';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -15,8 +15,14 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Camera'>;
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
-const FOOTER_HEIGHT = 160; // Total height of gradient + capture buttons + bottom nav
-const BOTTOM_NAV_HEIGHT = 90; // Height of BottomNavigation component
+
+// Footer includes gradient (60px) + buttons (70px) + bottom nav (90px) = 220px total
+const FOOTER_HEIGHT = 250;
+const BOTTOM_NAV_HEIGHT = 90;
+
+// This is the area where crop box can move
+const AVAILABLE_HEIGHT = SCREEN_HEIGHT - FOOTER_HEIGHT;
+
 
 export default function CameraScreen() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -43,6 +49,39 @@ export default function CameraScreen() {
       }
     })();
   }, []);
+
+  // Initialize crop box with proper dimensions when photo is captured
+  useEffect(() => {
+    if (capturedPhoto) {
+      // Calculate display dimensions that fit in available height
+      const aspectRatio = capturedPhoto.dimensions.width / capturedPhoto.dimensions.height;
+      let displayWidth = SCREEN_WIDTH;
+      let displayHeight = SCREEN_WIDTH / aspectRatio;
+
+      // If image is too tall, constrain by height instead
+      if (displayHeight > AVAILABLE_HEIGHT) {
+        displayHeight = AVAILABLE_HEIGHT;
+        displayWidth = displayHeight * aspectRatio;
+      }
+
+      setDisplayDimensions({ width: displayWidth, height: displayHeight });
+
+      // Set initial crop box size - smaller than before (60% of image)
+      const cropWidth = capturedPhoto.dimensions.width * 0.6;
+      const cropHeight = capturedPhoto.dimensions.height * 0.4;
+      
+      // Center the crop box initially
+      const cropX = (capturedPhoto.dimensions.width - cropWidth) / 2;
+      const cropY = (capturedPhoto.dimensions.height - cropHeight) / 2;
+
+      setCropRegion({
+        x: cropX,
+        y: cropY,
+        width: cropWidth,
+        height: cropHeight,
+      });
+    }
+  }, [capturedPhoto]);
 
   if (hasPermission === null) {
     return <View style={styles.container} />;
@@ -87,10 +126,10 @@ export default function CameraScreen() {
         });
         logger.photoCaptureEnd();
 
-        // Navigate directly to Crop screen after taking picture
-        navigation.navigate('Crop', {
-          photoUri: photo.uri,
-          dimensions: { width: photo.width, height: photo.height },
+        // Set captured photo state to show crop UI
+        setCapturedPhoto({
+          uri: photo.uri,
+          dimensions: { width: photo.width, height: photo.height }
         });
       }
     } catch (error) {
@@ -120,6 +159,7 @@ export default function CameraScreen() {
     navigation.navigate('Crop', {
       photoUri: capturedPhoto.uri,
       dimensions: capturedPhoto.dimensions,
+      initialCropRegion: cropRegion,
     });
   };
 
@@ -133,8 +173,8 @@ export default function CameraScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Preview Area - constrained to not overlap footer */}
-      <View style={styles.previewArea}>
+      {/* Preview Area - properly constrained to AVAILABLE_HEIGHT */}
+      <View style={[styles.previewArea, { height: AVAILABLE_HEIGHT }]}>
         {!capturedPhoto ? (
           <Camera
             ref={cameraRef}
@@ -164,18 +204,22 @@ export default function CameraScreen() {
             <View style={styles.imageContainer}>
               <Image 
                 source={{ uri: capturedPhoto.uri }} 
-                style={styles.capturedImage}
-                resizeMode="cover"
+                style={[
+                  styles.capturedImage,
+                  {
+                    width: displayDimensions.width,
+                    height: displayDimensions.height,
+                  }
+                ]}
+                resizeMode="contain"
               />
-              {capturedPhoto && (
+              {displayDimensions.width > 0 && displayDimensions.height > 0 && (
                 <CropBox
                   cropRegion={cropRegion}
                   onCropChange={setCropRegion}
                   imageDimensions={capturedPhoto.dimensions}
-                  displayDimensions={{
-                    width: SCREEN_WIDTH,
-                    height: SCREEN_HEIGHT - FOOTER_HEIGHT
-                  }}
+                  displayDimensions={displayDimensions}
+                  maxHeight={AVAILABLE_HEIGHT}
                 />
               )}
             </View>
@@ -183,8 +227,8 @@ export default function CameraScreen() {
         )}
       </View>
 
-      {/* Footer - Always visible, never overlapped */}
-      <View style={styles.footerWrapper}>
+      {/* Footer - Always visible at bottom, fixed height */}
+      <View style={[styles.footerWrapper, { height: FOOTER_HEIGHT }]}>
         {/* Gradient overlay with rounded top border */}
         <View style={styles.gradientOverlay}>
           <View style={styles.gradientTop} />
@@ -299,48 +343,40 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   previewArea: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: FOOTER_HEIGHT,
+    width: '100%',
     backgroundColor: COLORS.background,
+    position: 'relative',
   },
   camera: {
     flex: 1,
+    width: '100%',
+    height: '100%',
   },
   capturedPhotoWrapper: {
     flex: 1,
+    width: '100%',
+    height: '100%',
     backgroundColor: COLORS.background,
   },
   imageContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 5, // Higher priority than content overlays
-  },
-  capturedImage: {
     width: '100%',
     height: '100%',
+    position: 'relative',
+  },
+  capturedImage: {
     backgroundColor: '#1a1a1a',
   },
   footerWrapper: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     width: '100%',
-    height: FOOTER_HEIGHT,
-    zIndex: 10, // Lower z-index than image container
     backgroundColor: 'transparent',
+    position: 'relative',
   },
   gradientOverlay: {
     position: 'absolute',
-    top: 10,
+    top: 0,
     left: 0,
     right: 0,
     bottom: 0,
@@ -351,42 +387,39 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 0,
-    backgroundColor: 'rgba(6, 194, 31, 0)', // Fully transparent at top
-    zIndex: -1, // Keep gradients behind content
+    height: 40,
+    backgroundColor: 'rgba(0, 0, 0, 0)',
   },
   gradientMiddle: {
     position: 'absolute',
-    top: 0,
+    top: 40,
     left: 0,
     right: 0,
-    height: 30,
-    backgroundColor: 'rgba(167, 201, 17, 0)', // Semi-transparent fade
-    zIndex: -1, // Keep gradients behind content
+    height: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   gradientBottom: {
     position: 'absolute',
-    top: -40,
+    top: 60,
     left: 0,
     right: 0,
-    bottom: -90,
-    backgroundColor: '#000000', // Solid black for buttons and nav
+    bottom: 0,
+    backgroundColor: '#000000',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     borderTopWidth: 1,
-    borderTopColor: '#ffffffff', // WHITE BORDER LINE - now at 60px
-    zIndex: -1, // Ensure gradient stays behind other content
+    borderTopColor: '#ffffff',
   },
   topBar: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    paddingTop: 50,
+    paddingTop: Platform.OS === 'ios' ? 50 : 40,
     paddingHorizontal: 20,
     flexDirection: 'row',
     justifyContent: 'center',
-    zIndex: 15, // Higher than image container to stay visible
+    zIndex: 15,
   },
   centerContent: {
     position: 'absolute',
@@ -394,7 +427,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
-    zIndex: 100, // Highest priority for instructional text overlay
+    zIndex: 100,
   },
   brandContainer: {
     flexDirection: 'row',
@@ -424,9 +457,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 40,
-    paddingTop: 0, // Space from top of footer to buttons (includes gradient area)
-    paddingBottom: -20,
-    zIndex: 8, // Set below footer wrapper to stay within bounds
+    paddingTop: 80,
+    paddingBottom: 10,
+    zIndex: 8,
     backgroundColor: 'transparent',
   },
   iconButton: {
@@ -469,5 +502,7 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     backgroundColor: '#5FA8A8',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
